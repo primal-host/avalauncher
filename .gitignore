@@ -1,0 +1,16 @@
+# Binary
+/avalauncher
+
+# Environment
+.env
+
+# Secrets
+secrets/
+
+# Cluster config (contains host credentials)
+cluster.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
