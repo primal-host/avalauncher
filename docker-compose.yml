@@ -1,0 +1,30 @@
+services:
+  avalauncher:
+    build: .
+    image: crypto-avalauncher
+    container_name: crypto-avalauncher
+    restart: unless-stopped
+    env_file: .env
+    secrets:
+      - db_password
+      - admin_key
+    networks:
+      - infra
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.avalauncher.rule=Host(`avalauncher.primal.host`) || Host(`avalauncher.localhost`)"
+      - "traefik.http.routers.avalauncher.entrypoints=websecure"
+      - "traefik.http.routers.avalauncher.tls.certresolver=letsencrypt"
+      - "traefik.http.services.avalauncher.loadbalancer.server.port=4321"
+    dns:
+      - 192.168.147.53
+
+secrets:
+  db_password:
+    file: ${HOME}/apps/infra/postgres/secrets/dba_avalauncher_password.txt
+  admin_key:
+    file: ./secrets/admin_key.txt
+
+networks:
+  infra:
+    external: true
