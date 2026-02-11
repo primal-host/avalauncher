@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -15,8 +16,9 @@ type AvagoParams struct {
 	Image       string // Docker image reference
 	NetworkName string // Docker network to attach to (e.g. "avax")
 	NetworkID   string // Avalanche network: mainnet, fuji, local
-	StakingPort int    // host port for P2P staking (9651)
-	ExposeHTTP  bool   // whether to publish HTTP API port to host
+	StakingPort   int      // host port for P2P staking (9651)
+	ExposeHTTP    bool     // whether to publish HTTP API port to host
+	TrackSubnets  []string // L1 subnet IDs for AVAGO_TRACK_SUBNETS
 }
 
 // ContainerName returns the Docker container name for this node.
@@ -46,6 +48,9 @@ func (p *AvagoParams) BuildContainerConfig() (*container.Config, *container.Host
 		"AVAGO_NETWORK_ID=" + p.NetworkID,
 		"AVAGO_HTTP_HOST=0.0.0.0",
 		"AVAGO_PUBLIC_IP_RESOLUTION_SERVICE=opendns",
+	}
+	if len(p.TrackSubnets) > 0 {
+		env = append(env, "AVAGO_TRACK_SUBNETS="+strings.Join(p.TrackSubnets, ","))
 	}
 
 	exposedPorts := nat.PortSet{
