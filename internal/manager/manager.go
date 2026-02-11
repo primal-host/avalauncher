@@ -430,6 +430,15 @@ func (m *Manager) DeleteNode(ctx context.Context, id int64, removeVolumes bool) 
 		return fmt.Errorf("get node: %w", err)
 	}
 
+	// Check for L1 validator assignments.
+	var valCount int64
+	if err := m.pool.QueryRow(ctx, "SELECT count(*) FROM l1_validators WHERE node_id=$1", id).Scan(&valCount); err != nil {
+		return fmt.Errorf("check validators: %w", err)
+	}
+	if valCount > 0 {
+		return fmt.Errorf("node has %d L1 validator assignment(s) — remove them first", valCount)
+	}
+
 	if node.ContainerID != "" {
 		dc := m.clientFor(node.HostID)
 		if dc == nil {
