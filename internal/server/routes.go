@@ -26,6 +26,9 @@ func (s *Server) routes() {
 	api.DELETE("/nodes/:id", s.handleDeleteNode)
 	api.GET("/nodes/:id/logs", s.handleNodeLogs)
 	api.GET("/events", s.handleListEvents)
+	api.GET("/hosts", s.handleListHosts)
+	api.POST("/hosts", s.handleAddHost)
+	api.DELETE("/hosts/:id", s.handleRemoveHost)
 }
 
 // requireBearer is Echo middleware that checks the Authorization header.
@@ -75,17 +78,21 @@ func (s *Server) handleStatus(c echo.Context) error {
 		resp["authenticated"] = true
 		nodes, err := s.mgr.ListNodes(ctx)
 		if err == nil {
-			hostLabel := s.mgr.LocalHostLabel()
+			hostLabels := s.mgr.HostLabelsMap(ctx)
 			summaries := make([]manager.NodeSummary, 0, len(nodes))
 			for _, n := range nodes {
 				l1s, _ := s.mgr.ListL1sForNode(ctx, n.ID)
 				if l1s == nil {
 					l1s = []manager.L1Summary{}
 				}
+				hostName := hostLabels[n.HostID]
+				if hostName == "" {
+					hostName = "unknown"
+				}
 				summaries = append(summaries, manager.NodeSummary{
 					ID:          n.ID,
 					Name:        n.Name,
-					HostName:    hostLabel,
+					HostName:    hostName,
 					Image:       n.Image,
 					NodeID:      n.NodeID,
 					StakingPort: n.StakingPort,
@@ -94,6 +101,11 @@ func (s *Server) handleStatus(c echo.Context) error {
 				})
 			}
 			resp["nodes"] = summaries
+		}
+
+		hosts, err := s.mgr.ListHosts(ctx)
+		if err == nil {
+			resp["hosts_list"] = hosts
 		}
 	}
 
@@ -202,6 +214,37 @@ func (s *Server) handleListEvents(c echo.Context) error {
 		events = []manager.Event{}
 	}
 	return c.JSON(http.StatusOK, events)
+}
+
+func (s *Server) handleListHosts(c echo.Context) error {
+	hosts, err := s.mgr.ListHosts(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, hosts)
+}
+
+func (s *Server) handleAddHost(c echo.Context) error {
+	var req manager.AddHostRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+	host, err := s.mgr.AddHost(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusCreated, host)
+}
+
+func (s *Server) handleRemoveHost(c echo.Context) error {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+	if err := s.mgr.RemoveHost(c.Request().Context(), id); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"status": "removed"})
 }
 
 func (s *Server) checkBearer(c echo.Context) bool {
