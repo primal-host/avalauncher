@@ -118,6 +118,38 @@ curl -X DELETE -H "Authorization: Bearer $KEY" "http://avalauncher.localhost/api
 curl -H "Authorization: Bearer $KEY" http://avalauncher.localhost/api/events
 ```
 
+### L1 Management
+
+```bash
+# Create an L1 (pending — no subnet_id)
+curl -X POST -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
+  -d '{"name":"my-l1","vm":"subnet-evm"}' \
+  http://avalauncher.localhost/api/l1s
+
+# Create an L1 with subnet_id (configured)
+curl -X POST -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
+  -d '{"name":"my-l1","vm":"subnet-evm","subnet_id":"2sQkBA..."}' \
+  http://avalauncher.localhost/api/l1s
+
+# List L1s
+curl -H "Authorization: Bearer $KEY" http://avalauncher.localhost/api/l1s
+
+# Get L1 details (includes validators)
+curl -H "Authorization: Bearer $KEY" http://avalauncher.localhost/api/l1s/1
+
+# Add a validator (triggers container reconfig if L1 has subnet_id)
+curl -X POST -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
+  -d '{"node_id":1,"weight":100}' \
+  http://avalauncher.localhost/api/l1s/1/validators
+
+# Remove a validator (triggers container reconfig if L1 has subnet_id)
+curl -X DELETE -H "Authorization: Bearer $KEY" \
+  http://avalauncher.localhost/api/l1s/1/validators/1
+
+# Delete an L1 (must remove validators first)
+curl -X DELETE -H "Authorization: Bearer $KEY" http://avalauncher.localhost/api/l1s/1
+```
+
 ## Docker Requirements
 
 Avalauncher requires access to the Docker socket (`/var/run/docker.sock`) to manage AvalancheGo containers. The compose file mounts this automatically.
