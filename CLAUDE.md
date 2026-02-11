@@ -47,6 +47,7 @@ Tables: `hosts`, `nodes`, `l1s`, `l1_validators`, `events`.
 - Traefik: `avalauncher.primal.host` / `avalauncher.localhost`
 - DNS: `192.168.147.53` (infra CoreDNS)
 - Docker socket mounted for container management
+- SSH keys (ro) and agent socket mounted for remote host access
 
 ## API Endpoints
 
@@ -63,6 +64,9 @@ Tables: `hosts`, `nodes`, `l1s`, `l1_validators`, `events`.
 | `DELETE` | `/api/nodes/:id` | Bearer | Remove node (?remove_volumes=true) |
 | `GET` | `/api/nodes/:id/logs` | Bearer | Container logs (?tail=50) |
 | `GET` | `/api/events` | Bearer | Audit event log (?limit=50) |
+| `GET` | `/api/hosts` | Bearer | List all hosts |
+| `POST` | `/api/hosts` | Bearer | Add remote host (name, ssh_addr) |
+| `DELETE` | `/api/hosts/:id` | Bearer | Remove host (no nodes) |
 
 ## Node Lifecycle
 
@@ -77,6 +81,8 @@ POST /api/nodes → creating → running ⇄ stopped → DELETE
 - Health poller (default 30s) checks running nodes via AvalancheGo JSON-RPC
 - Node ID discovered automatically on first healthy check
 - Startup reconciliation syncs DB status with actual Docker container states
+- Host poller (2x health interval) pings remote hosts, auto-reconnects on failure
+- Multi-host: nodes can target any connected host, port uniqueness scoped per host
 
 ## AvalancheGo Containers
 
@@ -86,3 +92,10 @@ POST /api/nodes → creating → running ⇄ stopped → DELETE
 - Staking port published to `0.0.0.0` for P2P
 - HTTP API (9650) internal to `avax` network only
 - Labels: `managed-by=avalauncher`, `avalauncher.node-name=<name>`
+
+## Remote Hosts
+
+- SSH-based Docker client via `connhelper` (github.com/docker/cli)
+- Remote host must have Docker 18.09+ and SSH key auth
+- Host info (hostname, OS, CPU, memory, Docker version) stored in `hosts.labels` JSONB
+- Remote host key must be in `~/.ssh/known_hosts`
