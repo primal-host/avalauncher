@@ -77,6 +77,10 @@ func (s *Server) handleStatus(c echo.Context) error {
 		if err == nil {
 			summaries := make([]manager.NodeSummary, 0, len(nodes))
 			for _, n := range nodes {
+				l1s, _ := s.mgr.ListL1sForNode(ctx, n.ID)
+				if l1s == nil {
+					l1s = []manager.L1Summary{}
+				}
 				summaries = append(summaries, manager.NodeSummary{
 					ID:          n.ID,
 					Name:        n.Name,
@@ -84,6 +88,7 @@ func (s *Server) handleStatus(c echo.Context) error {
 					NodeID:      n.NodeID,
 					StakingPort: n.StakingPort,
 					Status:      n.Status,
+					L1s:         l1s,
 				})
 			}
 			resp["nodes"] = summaries
