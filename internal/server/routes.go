@@ -75,6 +75,7 @@ func (s *Server) handleStatus(c echo.Context) error {
 		resp["authenticated"] = true
 		nodes, err := s.mgr.ListNodes(ctx)
 		if err == nil {
+			hostLabel := s.mgr.LocalHostLabel()
 			summaries := make([]manager.NodeSummary, 0, len(nodes))
 			for _, n := range nodes {
 				l1s, _ := s.mgr.ListL1sForNode(ctx, n.ID)
@@ -84,6 +85,7 @@ func (s *Server) handleStatus(c echo.Context) error {
 				summaries = append(summaries, manager.NodeSummary{
 					ID:          n.ID,
 					Name:        n.Name,
+					HostName:    hostLabel,
 					Image:       n.Image,
 					NodeID:      n.NodeID,
 					StakingPort: n.StakingPort,
