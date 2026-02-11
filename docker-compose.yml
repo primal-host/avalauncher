@@ -8,6 +8,7 @@ services:
     secrets:
       - db_password
       - admin_key
+      - traefik_auth
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ~/.ssh:/root/.ssh:ro
@@ -41,6 +42,8 @@ secrets:
     file: ${HOME}/apps/infra/postgres/secrets/dba_avalauncher_password.txt
   admin_key:
     file: ./secrets/admin_key.txt
+  traefik_auth:
+    file: ./secrets/traefik_auth.txt
 
 networks:
   infra:

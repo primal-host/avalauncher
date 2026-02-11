@@ -51,7 +51,6 @@ func Load() (*Config, error) {
 		HealthInterval: envOrDefault("HEALTH_INTERVAL", "30s"),
 		TraefikDomain:  os.Getenv("AVAGO_TRAEFIK_DOMAIN"),
 		TraefikNetwork: envOrDefault("AVAGO_TRAEFIK_NETWORK", "infra"),
-		TraefikAuth:    os.Getenv("AVAGO_TRAEFIK_AUTH"),
 	}
 
 	pw, err := envOrFile("DB_PASSWORD")
@@ -65,6 +64,12 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("ADMIN_KEY: %w", err)
 	}
 	c.AdminKey = key
+
+	traefikAuth, err := envOrFile("AVAGO_TRAEFIK_AUTH")
+	if err != nil {
+		return nil, fmt.Errorf("AVAGO_TRAEFIK_AUTH: %w", err)
+	}
+	c.TraefikAuth = traefikAuth
 
 	return c, nil
 }
