@@ -8,21 +8,24 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/primal-host/avalauncher/internal/database"
+	"github.com/primal-host/avalauncher/internal/manager"
 )
 
 // Server holds the Echo instance and dependencies.
 type Server struct {
 	echo     *echo.Echo
 	db       *database.DB
+	mgr      *manager.Manager
 	adminKey string
 	addr     string
 }
 
 // New creates a configured Echo server.
-func New(db *database.DB, addr, adminKey string) *Server {
+func New(db *database.DB, mgr *manager.Manager, addr, adminKey string) *Server {
 	s := &Server{
 		echo:     echo.New(),
 		db:       db,
+		mgr:      mgr,
 		adminKey: adminKey,
 		addr:     addr,
 	}
