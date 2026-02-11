@@ -10,6 +10,10 @@ services:
       - admin_key
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:ro
+      - ${SSH_AUTH_SOCK:-/dev/null}:/ssh-agent:ro
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
     networks:
       - infra
       - avax
