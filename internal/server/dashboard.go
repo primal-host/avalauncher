@@ -261,21 +261,14 @@ const dashboardHTML = `<!DOCTYPE html>
 
     <div class="section">
       <div class="section-header">
-        <h2>Nodes</h2>
+        <div></div>
         <div class="section-actions">
           <button class="btn-create" onclick="showHostModal()">Add Host</button>
-          <button class="btn-create" onclick="showCreateModal()">Create Node</button>
+          <button class="btn-create" onclick="showCreateModal()">Add Node</button>
+          <button class="btn-create" onclick="showL1Modal()">Add L1</button>
         </div>
       </div>
       <div id="node-table"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">
-        <h2>L1s</h2>
-        <button class="btn-create" onclick="showL1Modal()">Create L1</button>
-      </div>
-      <div id="l1-table"></div>
     </div>
   </main>
 
@@ -560,53 +553,6 @@ const dashboardHTML = `<!DOCTYPE html>
       } catch(e) { console.error(e); }
     }
 
-    function renderL1s(l1s) {
-      const el = document.getElementById('l1-table');
-      if (!l1s || l1s.length === 0) {
-        el.innerHTML = '<div class="empty"><h2>No L1s</h2><p>Create an L1 to get started.</p></div>';
-        return;
-      }
-      let html = '<div class="node-cards">';
-      for (const l of l1s) {
-        const sc = statusClass(l.status);
-        html += '<div class="node-card">';
-        html += '<div class="node-card-header">';
-        html += '<span class="node-name">' + l.name + '</span>';
-        html += '<div class="node-meta">';
-        html += '<span class="' + sc + '"><span class="status-dot"></span>' + l.status + '</span>';
-        html += '<span class="tag">' + l.vm + '</span>';
-        if (l.subnet_id) html += '<span class="mono">' + truncate(l.subnet_id, 20) + '</span>';
-        if (l.blockchain_id) html += '<span class="mono">' + truncate(l.blockchain_id, 20) + '</span>';
-        html += '</div>';
-        html += '<div class="node-actions">';
-        html += '<button class="btn" onclick="showValidatorModal(' + l.id + ')">Add Validator</button>';
-        html += '<button class="btn btn-danger" onclick="deleteL1(' + l.id + ',\'' + l.name + '\')">Delete</button>';
-        html += '</div>';
-        html += '</div>';
-
-        html += '<div class="node-card-body">';
-        const vals = l.validators || [];
-        if (vals.length === 0) {
-          html += '<span class="l1-none">No validators</span>';
-        } else {
-          html += '<ul class="l1-list">';
-          for (const v of vals) {
-            html += '<li>';
-            html += '<span>' + v.node_name + '</span>';
-            html += '<span class="tag">weight: ' + v.weight + '</span>';
-            if (v.tx_id) html += '<span class="mono">' + truncate(v.tx_id, 16) + '</span>';
-            html += '<span class="host-remove" onclick="removeValidator(' + l.id + ',' + v.node_id + ',\'' + v.node_name + '\')">remove</span>';
-            html += '</li>';
-          }
-          html += '</ul>';
-        }
-        html += '</div>';
-        html += '</div>';
-      }
-      html += '</div>';
-      el.innerHTML = html;
-    }
-
     async function nodeAction(id, action) {
       if (!adminKey) { showKeyModal(); return; }
       const method = action === 'delete' ? 'DELETE' : 'POST';
@@ -668,9 +614,6 @@ const dashboardHTML = `<!DOCTYPE html>
       }
       html += '</div></div>';
       html += '<div class="node-cards">';
-      if (hostNodes.length === 0) {
-        html += '<div class="empty" style="padding:1.5rem"><p>No nodes on this host</p></div>';
-      }
       for (const n of hostNodes) {
         const sc = statusClass(n.status);
         const nid = n.node_id ? '<span class="mono">' + truncate(n.node_id, 24) + '</span>' : '';
@@ -695,11 +638,9 @@ const dashboardHTML = `<!DOCTYPE html>
         html += '<div class="node-actions">' + actions + '</div>';
         html += '</div>';
 
-        html += '<div class="node-card-body">';
         const l1s = n.l1s || [];
-        if (l1s.length === 0) {
-          html += '<span class="l1-none">No L1s</span>';
-        } else {
+        if (l1s.length > 0) {
+          html += '<div class="node-card-body">';
           html += '<ul class="l1-list">';
           for (const l of l1s) {
             html += '<li>';
@@ -710,8 +651,8 @@ const dashboardHTML = `<!DOCTYPE html>
             html += '</li>';
           }
           html += '</ul>';
+          html += '</div>';
         }
-        html += '</div>';
         html += '</div>';
       }
       html += '</div>';
@@ -734,7 +675,6 @@ const dashboardHTML = `<!DOCTYPE html>
         if (d.hosts_list) hostsList = d.hosts_list;
         if (d.nodes) nodesList = d.nodes;
         renderNodes(d.nodes || []);
-        renderL1s(d.l1s_list || []);
       } catch(e) { console.error(e); }
     }
 
