@@ -52,15 +52,17 @@ func New(ctx context.Context, dc *docker.Client, pool *pgxpool.Pool, avagoImage,
 	}
 
 	// Gather host info and resolve hostname.
+	// Inside a container, both Docker info and os.Hostname() return the
+	// container ID. Use HOSTNAME env var first (set by compose), then
+	// Docker info, then fall back to "local".
 	var hostname string
 	info, err := dc.HostInfo(ctx)
-	if err == nil && info.Hostname != "" && !looksLikeContainerID(info.Hostname) && info.Hostname != "orbstack" {
+	if h := os.Getenv("LOCAL_HOSTNAME"); h != "" {
+		hostname = h
+	} else if err == nil && info.Hostname != "" && !looksLikeContainerID(info.Hostname) {
 		hostname = info.Hostname
 	} else {
-		hostname, _ = os.Hostname()
-		if hostname == "" {
-			hostname = "local"
-		}
+		hostname = "local"
 	}
 
 	// Build labels JSONB from host info.

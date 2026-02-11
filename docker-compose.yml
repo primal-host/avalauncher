@@ -14,6 +14,7 @@ services:
       - ${SSH_AUTH_SOCK:-/dev/null}:/ssh-agent:ro
     environment:
       - SSH_AUTH_SOCK=/ssh-agent
+      - LOCAL_HOSTNAME=${LOCAL_HOSTNAME:-local}
     networks:
       - infra
       - avax
