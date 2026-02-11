@@ -108,10 +108,26 @@ POST /api/l1s → pending (no subnet_id)
 
 - Container naming: `avax-<name>` (e.g., `avax-mainnet-1`)
 - Volumes: `avax-<name>-db`, `avax-<name>-staking`, `avax-<name>-logs`
-- Network: `avax` (bridge)
+- Networks: `avax` (bridge) + `infra` (for Traefik routing)
 - Staking port published to `0.0.0.0` for P2P
-- HTTP API (9650) internal to `avax` network only
-- Labels: `managed-by=avalauncher`, `avalauncher.node-name=<name>`
+- HTTP API (9650) routed via Traefik with basic auth
+- Labels: `managed-by=avalauncher`, `avalauncher.node-name=<name>`, Traefik labels
+
+## Traefik RPC Routing
+
+AvalancheGo node RPC endpoints are exposed via Traefik with basic auth:
+
+- **HTTPS**: `https://<node-name>.avax.primal.host` (Let's Encrypt DNS challenge)
+- **Local**: `http://<node-name>.avax.localhost`
+- **Auth**: Basic auth (user/pass from `AVAGO_TRAEFIK_AUTH`)
+- **Port**: Routes to container port 9650 (AvalancheGo HTTP API)
+
+Config env vars:
+- `AVAGO_TRAEFIK_DOMAIN` — Domain suffix (e.g., `avax.primal.host`). Empty disables routing.
+- `AVAGO_TRAEFIK_NETWORK` — Docker network Traefik can reach (default: `infra`)
+- `AVAGO_TRAEFIK_AUTH` — htpasswd entry for basicauth (e.g., `user:$2y$05$...`)
+
+**DNS requirement**: Add `*.avax` wildcard A/CNAME record on Namecheap pointing to `primal.host`.
 
 ## Remote Hosts
 
