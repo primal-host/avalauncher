@@ -280,6 +280,12 @@ const dashboardHTML = `<!DOCTYPE html>
       <input type="text" id="node-name" placeholder="mainnet-1">
       <label for="node-port">Staking Port</label>
       <input type="number" id="node-port" value="9651" placeholder="9651">
+      <label for="node-network">Network</label>
+      <select id="node-network">
+        <option value="mainnet">mainnet</option>
+        <option value="fuji">fuji</option>
+        <option value="local">local</option>
+      </select>
       <label for="node-image">Image (optional)</label>
       <input type="text" id="node-image" placeholder="avaplatform/avalanchego:latest">
       <label for="node-host">Host</label>
@@ -450,11 +456,12 @@ const dashboardHTML = `<!DOCTYPE html>
     async function createNode() {
       const name = document.getElementById('node-name').value.trim();
       const port = parseInt(document.getElementById('node-port').value) || 9651;
+      const network = document.getElementById('node-network').value;
       const image = document.getElementById('node-image').value.trim();
       const hostId = parseInt(document.getElementById('node-host').value) || 0;
       if (!name) { showError('create-error', 'Name is required'); return; }
       try {
-        const body = {name, staking_port: port, host_id: hostId};
+        const body = {name, staking_port: port, network: network, host_id: hostId};
         if (image) body.image = image;
         const r = await fetch('/api/nodes', {method: 'POST', headers: headers(), body: JSON.stringify(body)});
         const d = await r.json();
@@ -633,6 +640,7 @@ const dashboardHTML = `<!DOCTYPE html>
         html += '<span class="' + sc + '"><span class="status-dot"></span>' + n.status + '</span>';
         html += '<span class="mono">' + truncate(n.image, 30) + '</span>';
         html += '<span class="tag">:' + n.staking_port + '</span>';
+        if (n.network) html += '<span class="tag">' + n.network + '</span>';
         if (nid) html += nid;
         html += '</div>';
         html += '<div class="node-actions">' + actions + '</div>';
