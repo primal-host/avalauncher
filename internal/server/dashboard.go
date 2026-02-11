@@ -355,7 +355,8 @@ const dashboardHTML = `<!DOCTYPE html>
         } else if (n.status === 'stopped' || n.status === 'failed') {
           actions += '<button class="btn" onclick="nodeAction('+n.id+',\'start\')">Start</button>';
         }
-        actions += '<button class="btn btn-danger" onclick="if(confirm(\'Delete node ' + n.name + '?\'))nodeAction('+n.id+',\'delete\')">Delete</button>';
+        const canDelete = n.status === 'stopped' || n.status === 'failed';
+        actions += '<button class="btn btn-danger" ' + (canDelete ? 'onclick="if(confirm(\'Delete node ' + n.name + '?\'))nodeAction('+n.id+',\'delete\')"' : 'disabled style="opacity:0.4;cursor:not-allowed"') + '>Delete</button>';
 
         html += '<div class="node-card">';
         html += '<div class="node-card-header">';
