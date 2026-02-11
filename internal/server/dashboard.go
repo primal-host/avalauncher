@@ -365,6 +365,7 @@ const dashboardHTML = `<!DOCTYPE html>
     let adminKey = sessionStorage.getItem('adminKey') || '';
     let hostsList = [];
     let nodesList = [];
+    let traefikDomain = '';
 
     function headers() {
       const h = {'Content-Type': 'application/json'};
@@ -641,6 +642,10 @@ const dashboardHTML = `<!DOCTYPE html>
         html += '<span class="mono">' + truncate(n.image, 30) + '</span>';
         html += '<span class="tag">:' + n.staking_port + '</span>';
         if (n.network) html += '<span class="tag">' + n.network + '</span>';
+        if (traefikDomain && (n.status === 'running' || n.status === 'unhealthy')) {
+          const rpcUrl = 'https://' + n.name + '.' + traefikDomain;
+          html += '<a href="' + rpcUrl + '/ext/info" target="_blank" class="tag" style="color:#38bdf8;text-decoration:none" title="RPC endpoint">rpc</a>';
+        }
         if (nid) html += nid;
         html += '</div>';
         html += '<div class="node-actions">' + actions + '</div>';
@@ -680,6 +685,7 @@ const dashboardHTML = `<!DOCTYPE html>
           document.getElementById('events').textContent = d.counts.events;
         }
         updateAuthBadge(d.authenticated);
+        if (d.traefik_domain) traefikDomain = d.traefik_domain;
         if (d.hosts_list) hostsList = d.hosts_list;
         if (d.nodes) nodesList = d.nodes;
         renderNodes(d.nodes || []);

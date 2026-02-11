@@ -74,7 +74,7 @@ func main() {
 	mgr.StartHealthPoller()
 	mgr.StartHostPoller()
 
-	srv := server.New(db, mgr, cfg.ListenAddr, cfg.AdminKey)
+	srv := server.New(db, mgr, cfg.ListenAddr, cfg.AdminKey, cfg.TraefikDomain)
 
 	go func() {
 		if err := srv.Start(); err != nil {

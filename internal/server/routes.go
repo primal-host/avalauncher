@@ -80,6 +80,10 @@ func (s *Server) handleStatus(c echo.Context) error {
 		"counts":  counts,
 	}
 
+	if s.traefikDomain != "" {
+		resp["traefik_domain"] = s.traefikDomain
+	}
+
 	if authenticated {
 		resp["authenticated"] = true
 		nodes, err := s.mgr.ListNodes(ctx)

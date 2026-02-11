@@ -13,21 +13,23 @@ import (
 
 // Server holds the Echo instance and dependencies.
 type Server struct {
-	echo     *echo.Echo
-	db       *database.DB
-	mgr      *manager.Manager
-	adminKey string
-	addr     string
+	echo           *echo.Echo
+	db             *database.DB
+	mgr            *manager.Manager
+	adminKey       string
+	addr           string
+	traefikDomain  string // e.g. "avax.primal.host" (empty = no RPC URLs)
 }
 
 // New creates a configured Echo server.
-func New(db *database.DB, mgr *manager.Manager, addr, adminKey string) *Server {
+func New(db *database.DB, mgr *manager.Manager, addr, adminKey, traefikDomain string) *Server {
 	s := &Server{
-		echo:     echo.New(),
-		db:       db,
-		mgr:      mgr,
-		adminKey: adminKey,
-		addr:     addr,
+		echo:          echo.New(),
+		db:            db,
+		mgr:           mgr,
+		adminKey:      adminKey,
+		addr:          addr,
+		traefikDomain: traefikDomain,
 	}
 	s.echo.HideBanner = true
 	s.echo.HidePort = true
