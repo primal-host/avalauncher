@@ -16,7 +16,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Basic auth
-      - "traefik.http.middlewares.avalauncher-auth.basicauth.users=primal:$$2y$$05$$vhuYLDj2vtKFLF8lv2cjz.XqfKT1Sjs/qC2vk08cad7HAkMm0Q7R2"
+      - "traefik.http.middlewares.avalauncher-auth.basicauth.users=primal:$$2y$$05$$su6ZcFZfIvIY.yorGtC1RuF3eohY78twLb/Ew7U7PbWnEBmJFzPpC"
       # Production (HTTPS)
       - "traefik.http.routers.avalauncher.rule=Host(`avalauncher.primal.host`)"
       - "traefik.http.routers.avalauncher.entrypoints=https"
