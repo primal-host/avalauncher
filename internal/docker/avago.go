@@ -19,6 +19,11 @@ type AvagoParams struct {
 	StakingPort   int      // host port for P2P staking (9651)
 	ExposeHTTP    bool     // whether to publish HTTP API port to host
 	TrackSubnets  []string // L1 subnet IDs for AVAGO_TRACK_SUBNETS
+
+	// Traefik RPC routing (empty TraefikDomain disables)
+	TraefikDomain  string // domain suffix, e.g. "avax.primal.host" → <name>.avax.primal.host
+	TraefikNetwork string // Docker network Traefik can reach (e.g. "infra")
+	TraefikAuth    string // htpasswd entry for basicauth (e.g. "primal:$2y$...")
 }
 
 // ContainerName returns the Docker container name for this node.
@@ -82,14 +87,52 @@ func (p *AvagoParams) BuildContainerConfig() (*container.Config, *container.Host
 		}
 	}
 
+	labels := map[string]string{
+		LabelManagedBy: ManagedByValue,
+		LabelNodeName:  p.Name,
+	}
+
+	// Traefik labels for RPC routing with basic auth.
+	if p.TraefikDomain != "" {
+		routerName := "avax-" + p.Name
+		host := p.Name + "." + p.TraefikDomain
+		localHost := p.Name + ".avax.localhost"
+
+		labels["traefik.enable"] = "true"
+		labels["traefik.docker.network"] = p.TraefikNetwork
+
+		// HTTPS router with basicauth.
+		labels["traefik.http.routers."+routerName+".rule"] = "Host(`" + host + "`)"
+		labels["traefik.http.routers."+routerName+".entrypoints"] = "https"
+		labels["traefik.http.routers."+routerName+".tls.certresolver"] = "letsencrypt-dns"
+		labels["traefik.http.routers."+routerName+".tls.domains[0].main"] = p.TraefikDomain
+		labels["traefik.http.routers."+routerName+".tls.domains[0].sans"] = "*." + p.TraefikDomain
+		labels["traefik.http.routers."+routerName+".middlewares"] = "avax-auth"
+
+		// HTTP → HTTPS redirect.
+		labels["traefik.http.routers."+routerName+"-redirect.rule"] = "Host(`" + host + "`)"
+		labels["traefik.http.routers."+routerName+"-redirect.entrypoints"] = "http"
+		labels["traefik.http.routers."+routerName+"-redirect.middlewares"] = "https-redirect"
+
+		// Local HTTP router with basicauth.
+		labels["traefik.http.routers."+routerName+"-local.rule"] = "Host(`" + localHost + "`)"
+		labels["traefik.http.routers."+routerName+"-local.entrypoints"] = "http"
+		labels["traefik.http.routers."+routerName+"-local.middlewares"] = "avax-auth"
+
+		// Service.
+		labels["traefik.http.services."+routerName+".loadbalancer.server.port"] = "9650"
+
+		// Basicauth middleware (shared across all nodes).
+		if p.TraefikAuth != "" {
+			labels["traefik.http.middlewares.avax-auth.basicauth.users"] = p.TraefikAuth
+		}
+	}
+
 	cc := &container.Config{
 		Image:        p.Image,
 		Env:          env,
 		ExposedPorts: exposedPorts,
-		Labels: map[string]string{
-			LabelManagedBy: ManagedByValue,
-			LabelNodeName:  p.Name,
-		},
+		Labels:       labels,
 	}
 
 	hc := &container.HostConfig{
@@ -102,10 +145,16 @@ func (p *AvagoParams) BuildContainerConfig() (*container.Config, *container.Host
 		RestartPolicy: container.RestartPolicy{Name: container.RestartPolicyUnlessStopped},
 	}
 
+	endpoints := map[string]*network.EndpointSettings{
+		p.NetworkName: {},
+	}
+	// Add Traefik network so Traefik can route to the container.
+	if p.TraefikDomain != "" && p.TraefikNetwork != "" && p.TraefikNetwork != p.NetworkName {
+		endpoints[p.TraefikNetwork] = &network.EndpointSettings{}
+	}
+
 	nc := &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			p.NetworkName: {},
-		},
+		EndpointsConfig: endpoints,
 	}
 
 	return cc, hc, nc
