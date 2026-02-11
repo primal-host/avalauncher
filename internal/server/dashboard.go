@@ -118,6 +118,15 @@ const dashboardHTML = `<!DOCTYPE html>
   }
   .empty p { margin-top: 0.5rem; font-size: 0.875rem; }
   .mono { font-family: monospace; font-size: 0.8rem; color: #a1a1aa; }
+  .host-group { margin-bottom: 1.5rem; }
+  .host-label {
+    font-size: 0.8rem;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+  }
   .node-cards { display: flex; flex-direction: column; gap: 1rem; }
   .node-card {
     background: #16181d;
@@ -345,8 +354,19 @@ const dashboardHTML = `<!DOCTYPE html>
         el.innerHTML = '<div class="empty"><h2>No nodes</h2><p>Create a node to get started.</p></div>';
         return;
       }
-      let html = '<div class="node-cards">';
+      // Group nodes by host.
+      const groups = {};
       for (const n of nodes) {
+        const h = n.host_name || 'local';
+        if (!groups[h]) groups[h] = [];
+        groups[h].push(n);
+      }
+      let html = '';
+      for (const [host, hostNodes] of Object.entries(groups)) {
+      html += '<div class="host-group">';
+      html += '<div class="host-label">' + host + '</div>';
+      html += '<div class="node-cards">';
+      for (const n of hostNodes) {
         const sc = statusClass(n.status);
         const nid = n.node_id ? '<span class="mono">' + truncate(n.node_id, 24) + '</span>' : '';
         let actions = '';
@@ -390,6 +410,8 @@ const dashboardHTML = `<!DOCTYPE html>
         html += '</div>';
       }
       html += '</div>';
+      html += '</div>';
+      }
       el.innerHTML = html;
     }
 
